@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusNova - Pomodoro App</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(145deg, #252627, #303132);
+            color: #ffffff;
+        }
+
+        h1 {
+            margin: 0;
+            font-weight: 300;
+        }
+
+        .timer {
+            font-size: 5rem;
+            margin: 20px 0;
+            color: #ff6f61;
+        }
+
+        button {
+            background-color: #ff6f61;
+            color: #ffffff;
+            border: none;
+            border-radius: 25px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #ff8a7a;
+        }
+
+        button:disabled {
+            background-color: #5a5a5a;
+            cursor: not-allowed;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tasks {
+            margin-top: 20px;
+            width: 300px;
+        }
+
+        .tasks input {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            color: #000;
+        }
+
+        .to-do-item {
+            padding: 10px;
+            background-color: #303132;
+            border: 1px solid #444;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .to-do-item input {
+            margin-right: 10px;
+        }
+
+        .pomodoros {
+            margin-top: 20px;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .fade {
+            transition: opacity 0.5s ease;
+            opacity: 0;
+        }
+
+        .visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>FocusNova</h1>
+    <div class="timer" id="timer">25:00</div>
+    <div class="controls">
+        <button id="start-btn">Start</button>
+        <button id="pause-btn" disabled>Pause</button>
+        <button id="reset-btn" disabled>Reset</button>
+    </div>
+    <div class="tasks">
+        <input type="text" id="task-input" placeholder="Add a new task">
+        <div id="task-list"></div>
+    </div>
+    <div class="pomodoros">
+        Pomodoro Sessions Completed Today: <span id="pomodoro-count">0</span>
+    </div>
+
+    <script>
+        const timerDisplay = document.getElementById('timer');
+        const startBtn = document.getElementById('start-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const taskInput = document.getElementById('task-input');
+        const taskList = document.getElementById('task-list');
+        const pomodoroCountDisplay = document.getElementById('pomodoro-count');
+
+        let countdown, minutes, seconds, isPaused = false, pomodoroCount = 0, startTime = 25 * 60;
+
+        const updateTimerDisplay = () => {
+            const min = String(Math.floor(startTime / 60)).padStart(2, '0');
+            const sec = String(startTime % 60).padStart(2, '0');
+            timerDisplay.textContent = `${min}:${sec}`;
+        };
+
+        const startTimer = () => {
+            countdown = setInterval(() => {
+                if (!isPaused) {
+                    startTime--;
+                    if (startTime <= 0) {
+                        clearTimer();
+                        handleTimerEnd();
+                    }
+                    updateTimerDisplay();
+                }
+            }, 1000);
+        };
+
+        const pauseTimer = () => {
+            isPaused = !isPaused;
+            pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
+        };
+
+        const resetTimer = () => {
+            clearTimer();
+            startTime = 25 * 60;
+            updateTimerDisplay();
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            resetBtn.disabled = true;
+            isPaused = false;
+            pauseBtn.textContent = 'Pause';
+        };
+
+        const handleTimerEnd = () => {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+            oscillator.connect(audioCtx.destination);
+            oscillator.start();
+            setTimeout(() => oscillator.stop(), 1000);
+
+            pomodoroCount++;
+            pomodoroCountDisplay.textContent = pomodoroCount;
+        };
+
+        const clearTimer = () => {
+            clearInterval(countdown);
+        };
+
+        updateTimerDisplay();
+
+        startBtn.addEventListener('click', () => {
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+            resetBtn.disabled = false;
+            startTimer();
+        });
+
+        pauseBtn.addEventListener('click', pauseTimer);
+
+        resetBtn.addEventListener('click', resetTimer);
+
+        taskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && taskInput.value.trim()) {
+                const newTask = document.createElement('div');
+                newTask.className = 'to-do-item visible';
+                newTask.innerHTML = `
+                    <input type="checkbox">
+                    <span>${taskInput.value}</span>
+                `;
+                taskInput.value = '';
+                taskList.appendChild(newTask);
+            }
+        });
+    </script>
+</body>
+
+</html>
